@@ -1,11 +1,8 @@
 import * as LSP from "vscode-languageserver-protocol";
-import * as ordinal from "./ordinal";
+import * as merlin from ".";
 
 export namespace Case {
-  export type Destruct = [
-    { end: ordinal.IColumnLine; start: ordinal.IColumnLine },
-    string
-  ];
+  export type Destruct = [{ end: merlin.IColumnLine; start: merlin.IColumnLine }, string];
 }
 
 export namespace Completion {
@@ -13,9 +10,7 @@ export namespace Completion {
     name: string;
     type: string;
   }
-  export type Context =
-    | null
-    | ["application", { argument_type: string; labels: ILabel[] }];
+  export type Context = null | ["application", { argument_type: string; labels: ILabel[] }];
   export type Kind =
     | "#"
     | "Class"
@@ -62,12 +57,7 @@ export namespace Completion {
     desc: string;
     info: string;
   }
-  export function intoCode({
-    name: label,
-    kind,
-    desc: detail,
-    info: documentation,
-  }: IEntry): LSP.CompletionItem {
+  export function intoCode({ name: label, kind, desc: detail, info: documentation }: IEntry): LSP.CompletionItem {
     return {
       data: {
         documentation,
@@ -79,21 +69,21 @@ export namespace Completion {
   }
 }
 
-export interface IErrorReport {
-  start: ordinal.IColumnLine;
-  end: ordinal.IColumnLine;
+export interface IError {
+  start: merlin.IColumnLine;
+  end: merlin.IColumnLine;
   valid: boolean;
   message: string;
-  type: IErrorReport.Type;
+  sub: ISubError[];
+  type: IError.Type;
 }
-export namespace IErrorReport {
-  export type Type =
-    | "env"
-    | "error"
-    | "parser"
-    | "type"
-    | "unknown"
-    | "warning";
+export interface ISubError {
+  start: merlin.IColumnLine;
+  end: merlin.IColumnLine;
+  message: string;
+}
+export namespace IError {
+  export type Type = "env" | "error" | "parser" | "type" | "unknown" | "warning";
   export namespace Type {
     export function intoCode(type: Type): LSP.DiagnosticSeverity {
       switch (type) {
@@ -112,11 +102,7 @@ export namespace IErrorReport {
       }
     }
   }
-  async function improveMessage(
-    session: any,
-    { uri }: LSP.Location,
-    original: string,
-  ): Promise<string> {
+  async function improveMessage(session: any, { uri }: LSP.Location, original: string): Promise<string> {
     if (original === "Invalid statement") {
       const document = session.synchronizer.getText(uri);
       if (document && document.getText() === "=") {
@@ -135,11 +121,11 @@ export namespace IErrorReport {
   export async function intoCode(
     session: any,
     { uri }: LSP.TextDocumentIdentifier,
-    { end, message: original, start, type }: IErrorReport,
+    { end, message: original, start, type }: IError,
   ): Promise<LSP.Diagnostic> {
     const range = {
-      end: ordinal.Position.intoCode(end),
-      start: ordinal.Position.intoCode(start),
+      end: merlin.Position.intoCode(end),
+      start: merlin.Position.intoCode(start),
     };
     const location = { range, uri };
     const message = await improveMessage(session, location, original);
@@ -189,34 +175,25 @@ export namespace Outline {
     }
   }
   export interface IItem {
-    start: ordinal.IColumnLine;
-    end: ordinal.IColumnLine;
+    start: merlin.IColumnLine;
+    end: merlin.IColumnLine;
     name: string;
     kind: Kind;
     children: IItem[];
   }
-  export function intoCode(
-    outline: IItem[],
-    id: LSP.TextDocumentIdentifier,
-  ): LSP.SymbolInformation[] {
+  export function intoCode(outline: IItem[], id: LSP.TextDocumentIdentifier): LSP.SymbolInformation[] {
     const symbols: LSP.SymbolInformation[] = [];
     function traverse(children: IItem[], scope: string): void {
       for (const item of children) {
         if (item) {
           const kind = Kind.intoCode(item.kind);
           const range = {
-            end: ordinal.Position.intoCode(item.end),
-            start: ordinal.Position.intoCode(item.start),
+            end: merlin.Position.intoCode(item.end),
+            start: merlin.Position.intoCode(item.start),
           };
           const thisParent = scope === "" ? undefined : scope;
           const nextParent = `${scope}${scope === "" ? "" : "."}${item.name}`;
-          const info = LSP.SymbolInformation.create(
-            item.name,
-            kind,
-            range,
-            id.uri,
-            thisParent,
-          );
+          const info = LSP.SymbolInformation.create(item.name, kind, range, id.uri, thisParent);
           symbols.push(info);
           traverse(item.children, nextParent);
         }
@@ -245,8 +222,8 @@ export namespace TailPosition {
 }
 
 export interface IType {
-  start: ordinal.Position;
-  end: ordinal.Position;
+  start: merlin.Position;
+  end: merlin.Position;
   type: string;
   tail: TailPosition;
 }

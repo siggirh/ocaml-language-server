@@ -7,7 +7,7 @@ import Session from "./index";
 export default class Indexer implements LSP.Disposable {
   public populated: boolean = false;
   private readonly db: Loki = new Loki(".vscode.reasonml.loki");
-  private readonly symbols: LokiCollection<LSP.SymbolInformation>;
+  private readonly symbols: Loki.Collection<LSP.SymbolInformation>;
 
   constructor(private readonly session: Session) {
     this.symbols = this.db.addCollection<LSP.SymbolInformation>("symbols", {
@@ -19,7 +19,7 @@ export default class Indexer implements LSP.Disposable {
     return;
   }
 
-  public findSymbols(query: LokiQuery): LSP.SymbolInformation[] {
+  public findSymbols(query: LokiQuery<LSP.SymbolInformation>): LSP.SymbolInformation[] {
     let result: LSP.SymbolInformation[] = [];
     try {
       result = this.symbols
@@ -33,17 +33,12 @@ export default class Indexer implements LSP.Disposable {
     return result;
   }
 
-  public async indexSymbols(
-    id: LSP.TextDocumentIdentifier,
-  ): Promise<void | LSP.ResponseError<void>> {
-    const request = merlin.Query.outline();
-    const response = await this.session.merlin.query(request, null, id);
-    if (response.class !== "return")
-      return new LSP.ResponseError(-1, "indexSymbols: failed", undefined);
-    for (const item of merlin.Outline.intoCode(response.value, id)) {
+  public async indexSymbols(textDocument: LSP.TextDocumentIdentifier): Promise<void | LSP.ResponseError<void>> {
+    const outline = await this.session.merlin.command(null, textDocument).outline();
+    for (const item of merlin.Outline.intoCode(outline, textDocument)) {
       const prefix = item.containerName ? `${item.containerName}.` : "";
       item.name = `${prefix}${item.name}`;
-      item.containerName = this.session.environment.relativize(id);
+      item.containerName = this.session.environment.relativize(textDocument);
       this.symbols.insert(item);
     }
   }
@@ -56,23 +51,19 @@ export default class Indexer implements LSP.Disposable {
     if (!this.populated) {
       this.populated = true;
       const modules = await command.getModules(this.session, null, origin);
-      for (const id of modules) {
-        if (/\.(ml|re)i$/.test(id.uri)) continue;
-        const document = await command.getTextDocument(this.session, id);
-        if (document) {
-          await this.session.merlin.sync(
-            merlin.Sync.tell("start", "end", document.getText()),
-            id,
-          );
-          await this.refreshSymbols(id);
+      for (const textDocumentRef of modules) {
+        if (/\.(ml|re)i$/.test(textDocumentRef.uri)) continue;
+        const textDocument = await command.getTextDocument(this.session, textDocumentRef);
+        if (textDocument) {
+          // await this.session.merlin.command(null, )
+          await this.session.merlin.command(null, textDocumentRef).tell("start", "end", textDocument.getText());
+          await this.refreshSymbols(textDocumentRef);
         }
       }
     }
   }
 
-  public refreshSymbols(
-    id: LSP.TextDocumentIdentifier,
-  ): Promise<void | LSP.ResponseError<void>> {
+  public refreshSymbols(id: LSP.TextDocumentIdentifier): Promise<void | LSP.ResponseError<void>> {
     this.removeSymbols(id);
     return this.indexSymbols(id);
   }

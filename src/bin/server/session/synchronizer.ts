@@ -16,25 +16,17 @@ export default class Synchronizer implements LSP.Disposable {
   }
 
   public listen(): void {
-    this.session.connection.onDidCloseTextDocument(
-      this.onDidCloseTextDocument.bind(this),
-    );
-    this.session.connection.onDidOpenTextDocument(
-      this.onDidOpenTextDocument.bind(this),
-    );
-    this.session.connection.onDidChangeTextDocument(
-      this.onDidChangeTextDocument.bind(this),
-    );
-    this.session.connection.onDidSaveTextDocument(
-      this.onDidSaveTextDocument.bind(this),
-    );
+    this.session.connection.onDidCloseTextDocument(this.onDidCloseTextDocument.bind(this));
+    this.session.connection.onDidOpenTextDocument(this.onDidOpenTextDocument.bind(this));
+    this.session.connection.onDidChangeTextDocument(this.onDidChangeTextDocument.bind(this));
+    this.session.connection.onDidSaveTextDocument(this.onDidSaveTextDocument.bind(this));
   }
 
   public onDidChangeConfiguration(): void {
     return;
   }
 
-  public getTextDocument(uri: string): null | LSP.TextDocument {
+  public getTextDocument({ uri }: LSP.TextDocumentIdentifier): null | LSP.TextDocument {
     const document = this.documents.get(uri);
     return document ? document : null;
   }
@@ -56,18 +48,8 @@ export default class Synchronizer implements LSP.Disposable {
     languageId: string,
     content: string,
   ): Promise<void> {
-    this.documents.set(
-      document.uri,
-      LSP.TextDocument.create(
-        document.uri,
-        languageId,
-        document.version,
-        content,
-      ),
-    );
-
-    const request = merlin.Sync.tell("start", "end", content);
-    await this.session.merlin.sync(request, document, Infinity);
+    this.documents.set(document.uri, LSP.TextDocument.create(document.uri, languageId, document.version, content));
+    await this.session.merlin.command(null, document, Infinity).tell("start", "end", content);
   }
 
   private async doIncrementalSync(
@@ -77,41 +59,26 @@ export default class Synchronizer implements LSP.Disposable {
   ): Promise<void> {
     if (!change || !change.range) return;
 
-    const newContent = this.applyChangesToTextDocumentContent(
-      oldDocument,
-      change,
-    );
+    const newContent = this.applyChangesToTextDocumentContent(oldDocument, change);
     if (newContent) {
       this.documents.set(
         newDocument.uri,
-        LSP.TextDocument.create(
-          oldDocument.uri,
-          oldDocument.languageId,
-          newDocument.version,
-          newContent,
-        ),
+        LSP.TextDocument.create(oldDocument.uri, oldDocument.languageId, newDocument.version, newContent),
       );
     }
 
     const startPos = merlin.Position.fromCode(change.range.start);
     const endPos = merlin.Position.fromCode(change.range.end);
-    const request = merlin.Sync.tell(startPos, endPos, change.text);
-    await this.session.merlin.sync(request, newDocument, Infinity);
+    await this.session.merlin.command(null, newDocument, Infinity).tell(startPos, endPos, change.text);
   }
 
-  private async onDidChangeTextDocument(
-    event: LSP.DidChangeTextDocumentParams,
-  ): Promise<void> {
+  private async onDidChangeTextDocument(event: LSP.DidChangeTextDocumentParams): Promise<void> {
     for (const change of event.contentChanges) {
       if (!change) continue;
       const oldDocument = this.documents.get(event.textDocument.uri);
       if (!oldDocument) continue;
       if (!change.range) {
-        await this.doFullSync(
-          event.textDocument,
-          oldDocument.languageId,
-          change.text,
-        );
+        await this.doFullSync(event.textDocument, oldDocument.languageId, change.text);
       } else {
         await this.doIncrementalSync(oldDocument, event.textDocument, change);
       }
@@ -119,14 +86,8 @@ export default class Synchronizer implements LSP.Disposable {
     }
   }
 
-  private async onDidOpenTextDocument(
-    event: LSP.DidOpenTextDocumentParams,
-  ): Promise<void> {
-    await this.doFullSync(
-      event.textDocument,
-      event.textDocument.languageId,
-      event.textDocument.text,
-    );
+  private async onDidOpenTextDocument(event: LSP.DidOpenTextDocumentParams): Promise<void> {
+    await this.doFullSync(event.textDocument, event.textDocument.languageId, event.textDocument.text);
     await this.session.analyzer.refreshImmediate(event.textDocument);
     await this.session.indexer.populate(event.textDocument);
   }
@@ -136,9 +97,7 @@ export default class Synchronizer implements LSP.Disposable {
     this.session.analyzer.clear(event.textDocument);
   }
 
-  private async onDidSaveTextDocument(
-    event: LSP.DidSaveTextDocumentParams,
-  ): Promise<void> {
+  private async onDidSaveTextDocument(event: LSP.DidSaveTextDocumentParams): Promise<void> {
     await this.session.analyzer.refreshImmediate(event.textDocument);
   }
 }

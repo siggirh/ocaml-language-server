@@ -5,38 +5,29 @@ import Session from "../session";
 
 export default function(
   session: Session,
-): LSP.RequestHandler<
-  LSP.TextDocumentPositionParams,
-  LSP.CompletionItem[],
-  void
-> {
-  return async (event, token) => {
-    if (token.isCancellationRequested) return [];
-
+): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.CompletionItem[], void> {
+  const go = async (event: LSP.TextDocumentPositionParams, token: LSP.CancellationToken) => {
     let prefix: null | string = null;
     try {
       prefix = await command.getPrefix(session, event);
-      if (token.isCancellationRequested) return [];
     } catch (err) {
       // ignore errors from completing ' .'
     }
-    if (prefix == null) return [];
-
-    const position = merlin.Position.fromCode(event.position);
-    const request = merlin.Query.complete
-      .prefix(prefix)
-      .at(position)
-      .with.doc();
-    const response = await session.merlin.query(
-      request,
-      token,
-      event.textDocument,
-      Infinity,
-    );
-    if (token.isCancellationRequested) return [];
-    if (response.class !== "return") return [];
-
-    const entries = response.value.entries || [];
+    if (prefix == null) {
+      return [];
+    }
+    const colLine = merlin.Position.fromCode(event.position);
+    const entries =
+      (await session.merlin
+        .command(token, event.textDocument, Infinity)
+        .complete.prefix(prefix)
+        .at(colLine)
+        .with.doc()).entries || [];
     return entries.map(merlin.Completion.intoCode);
   };
+  return (event, token) =>
+    Promise.race<LSP.CompletionItem[]>([
+      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
+      go(event, token),
+    ]);
 }

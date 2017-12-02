@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import * as lodash from "lodash";
 import * as LSP from "vscode-languageserver-protocol";
 import { merlin, parser } from "../../../lib";
 import * as command from "../command";
@@ -6,13 +6,8 @@ import * as processes from "../processes";
 import Session from "./index";
 
 export default class Analyzer implements LSP.Disposable {
-  public readonly refreshImmediate: ((
-    event: LSP.TextDocumentIdentifier,
-  ) => Promise<void>);
-  public readonly refreshDebounced: ((
-    event: LSP.TextDocumentIdentifier,
-  ) => Promise<void>) &
-    _.Cancelable;
+  public readonly refreshImmediate: ((event: LSP.TextDocumentIdentifier) => Promise<void>);
+  public readonly refreshDebounced: ((event: LSP.TextDocumentIdentifier) => Promise<void>) & lodash.Cancelable;
   private readonly bsbDiagnostics: { [key: string]: LSP.Diagnostic[] } = {};
 
   constructor(private readonly session: Session) {}
@@ -39,10 +34,8 @@ export default class Analyzer implements LSP.Disposable {
   }
 
   public onDidChangeConfiguration(): void {
-    (this.refreshImmediate as any) = this.refreshWithKind(
-      LSP.TextDocumentSyncKind.Full,
-    );
-    (this.refreshDebounced as any) = _.debounce(
+    (this.refreshImmediate as any) = this.refreshWithKind(LSP.TextDocumentSyncKind.Full);
+    (this.refreshDebounced as any) = lodash.debounce(
       this.refreshWithKind(LSP.TextDocumentSyncKind.Incremental),
       this.session.settings.reason.debounce.linter,
       { trailing: true },
@@ -51,11 +44,9 @@ export default class Analyzer implements LSP.Disposable {
 
   public refreshWithKind(
     syncKind: LSP.TextDocumentSyncKind,
-  ): (id: LSP.TextDocumentIdentifier) => Promise<void> {
-    return async id => {
-      const tools: Set<string> = new Set(
-        this.session.settings.reason.diagnostics.tools,
-      );
+  ): (textDocumentRef: LSP.TextDocumentIdentifier) => Promise<void> {
+    return async textDocumentRef => {
+      const tools: Set<string> = new Set(this.session.settings.reason.diagnostics.tools);
       if (tools.size < 1) return;
 
       // Reset state for every run. This currently can hide valid warnings in some cases
@@ -64,7 +55,7 @@ export default class Analyzer implements LSP.Disposable {
       Object.keys(this.bsbDiagnostics).forEach(fileUri => {
         this.bsbDiagnostics[fileUri] = [];
       });
-      this.bsbDiagnostics[id.uri] = [];
+      this.bsbDiagnostics[textDocumentRef.uri] = [];
 
       if (tools.has("bsb") && syncKind === LSP.TextDocumentSyncKind.Full) {
         this.refreshDebounced.cancel();
@@ -76,9 +67,7 @@ export default class Analyzer implements LSP.Disposable {
           if (!this.bsbDiagnostics[fileUri]) {
             this.bsbDiagnostics[fileUri] = [];
           }
-          this.bsbDiagnostics[fileUri] = this.bsbDiagnostics[fileUri].concat(
-            diagnostics[fileUri],
-          );
+          this.bsbDiagnostics[fileUri] = this.bsbDiagnostics[fileUri].concat(diagnostics[fileUri]);
         });
 
         Object.keys(this.bsbDiagnostics).forEach(fileUri => {
@@ -92,26 +81,22 @@ export default class Analyzer implements LSP.Disposable {
         });
       } else if (tools.has("merlin")) {
         if (syncKind === LSP.TextDocumentSyncKind.Full) {
-          const document = await command.getTextDocument(this.session, id);
-          if (document)
-            await this.session.merlin.sync(
-              merlin.Sync.tell("start", "end", document.getText()),
-              id,
-            );
+          const textDocument = await command.getTextDocument(this.session, textDocumentRef);
+          if (textDocument) {
+            await this.session.merlin.command(null, textDocumentRef).tell("start", "end", textDocument.getText());
+          }
         }
         this.session.cancelTokens("analyzer/refreshWithKind");
-        const errors = await this.session.merlin.query(
-          merlin.Query.errors(),
-          this.session.cancellationSources["analyzer/refreshWithKind"].token,
-          id,
-        );
-        if (errors.class !== "return") return;
+        const errors = await this.session.merlin
+          .command(this.session.cancellationSources["analyzer/refreshWithKind"].token, textDocumentRef)
+          .errors();
         const diagnostics: LSP.Diagnostic[] = [];
-        for (const report of errors.value)
-          diagnostics.push(
-            await merlin.IErrorReport.intoCode(this.session, id, report),
-          );
-        this.session.connection.sendDiagnostics({ diagnostics, uri: id.uri });
+        for (const report of errors) {
+          if (report.end && report.start) {
+            diagnostics.push(await merlin.IError.intoCode(this.session, textDocumentRef, report));
+          }
+        }
+        this.session.connection.sendDiagnostics({ diagnostics, uri: textDocumentRef.uri });
       }
     };
   }

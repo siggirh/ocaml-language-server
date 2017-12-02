@@ -5,14 +5,11 @@ function isWhitespace(str: string = ""): boolean {
   return str.trim() === str;
 }
 
-export default async function(
-  session: Session,
-  event: types.ILocatedPosition,
-): Promise<string> {
-  const textDocument = session.synchronizer.getTextDocument(event.uri);
-  if (!textDocument) return "";
-  const text = textDocument.getText();
-  const offset = textDocument.offsetAt(event.position);
+export default async function(session: Session, event: types.ILocatedPosition): Promise<string> {
+  const document = session.synchronizer.getTextDocument(event);
+  if (!document) return "";
+  const text = document.getText();
+  const offset = document.offsetAt(event.position);
   let start = offset;
   while (0 < start && !isWhitespace(text[start])) start--;
   let end = offset;

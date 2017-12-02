@@ -10,6 +10,14 @@
     "node_modules": true,
     "yarn.lock": true
   },
+  "prettier.bracketSpacing": true,
+  "prettier.jsxBracketSameLine": true,
+  "prettier.printWidth": 120,
+  "prettier.semi": true,
+  "prettier.singleQuote": false,
+  "prettier.tabWidth": 2,
+  "prettier.trailingComma": "all",
+  "prettier.useTabs": false,
   "search.exclude": {
     "bin": false,
     "lib": false,

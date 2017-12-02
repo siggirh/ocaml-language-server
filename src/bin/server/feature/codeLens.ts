@@ -5,43 +5,38 @@ import Session from "../session";
 
 const annotateKinds = new Set<number>([LSP.SymbolKind.Variable]);
 
-export default function(
-  session: Session,
-): LSP.RequestHandler<LSP.CodeLensParams, LSP.CodeLens[], void> {
-  return async ({ textDocument }, token) => {
-    if (token.isCancellationRequested) return [];
-    if (!session.settings.reason.codelens.enabled) return [];
+export default function(session: Session): LSP.RequestHandler<LSP.CodeLensParams, LSP.CodeLens[], void> {
+  const go = async ({ textDocument }: LSP.CodeLensParams, token: LSP.CancellationToken) => {
+    if (!session.settings.reason.codelens.enabled) {
+      return [];
+    }
 
-    const languages: Set<string> = new Set(
-      session.settings.reason.server.languages,
-    );
-    if (languages.size < 1) return [];
+    const languages: Set<string> = new Set(session.settings.reason.server.languages);
+    if (languages.size < 1) {
+      return [];
+    }
 
     const allowedFileKinds: string[] = [];
-    if (languages.has("ocaml")) allowedFileKinds.push("ml");
-    if (languages.has("reason")) allowedFileKinds.push("re");
+    if (languages.has("ocaml")) {
+      allowedFileKinds.push("ml");
+    }
+    if (languages.has("reason")) {
+      allowedFileKinds.push("re");
+    }
 
-    const fileKindMatch = textDocument.uri.match(
-      new RegExp(`\.(${allowedFileKinds.join("|")})$`),
-    );
-    if (fileKindMatch == null) return [];
+    const fileKindMatch = textDocument.uri.match(new RegExp(`\.(${allowedFileKinds.join("|")})$`));
+    if (fileKindMatch == null) {
+      return [];
+    }
     const fileKind = fileKindMatch[1];
 
-    const request = merlin.Query.outline();
-    const response = await session.merlin.query(
-      request,
-      token,
-      textDocument,
-      1,
-    );
-    if (token.isCancellationRequested) return [];
-
-    if (response.class !== "return") return [];
+    const outline = await session.merlin.command(token, textDocument, 1).outline();
     const document = await command.getTextDocument(session, textDocument);
-    if (token.isCancellationRequested) return [];
-    if (!document) return [];
+    if (!document) {
+      return [];
+    }
 
-    const symbols = merlin.Outline.intoCode(response.value, textDocument);
+    const symbols = merlin.Outline.intoCode(outline, textDocument);
     const codeLenses: LSP.CodeLens[] = [];
     let matches: null | RegExpMatchArray = null;
     let textLine: null | string = null;
@@ -55,9 +50,7 @@ export default function(
         const event = { position, textDocument };
         // reason requires computing some offsets first
         if (
-          (textLine = document
-            .getText()
-            .substring(document.offsetAt(start), document.offsetAt(end))) &&
+          (textLine = document.getText().substring(document.offsetAt(start), document.offsetAt(end))) &&
           (matches = textLine.match(
             /^\s*\b(and|let)\b(\s*)(\brec\b)?(\s*)(?:(?:\(?(?:[^\)]*)\)?(?:\s*::\s*(?:(?:\b\w+\b)|\((?:\b\w+\b):.*?\)=(?:\b\w+\b)))?|\((?:\b\w+\b)(?::.*?)?\))\s*)(?:(?:(?:(?:\b\w+\b)(?:\s*::\s*(?:(?:\b\w+\b)|\((?:\b\w+\b):.*?\)=(?:\b\w+\b)))?|\((?:\b\w+\b)(?::.*?)?\))\s*)|(?::(?=[^:])(?:.*?=>)*)?(?:.*?=)\s*[^\s=;]+?\s*.*?;?$)/m,
           ))
@@ -67,13 +60,19 @@ export default function(
           event.position.character += matches[3] ? matches[3].length : 0;
           event.position.character += matches[4].length;
         }
-        if (matches)
+        if (matches) {
           codeLenses.push({
             data: { containerName, event, fileKind, kind, location, name },
             range,
           });
+        }
       }
     }
     return codeLenses;
   };
+  return (event, token) =>
+    Promise.race<LSP.CodeLens[]>([
+      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
+      go(event, token),
+    ]);
 }

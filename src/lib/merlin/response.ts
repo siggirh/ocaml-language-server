@@ -1,34 +1,32 @@
 import * as json from "./json";
 
-export interface IMerlinNotification {
+export interface INotification {
   section: string;
   message: string;
 }
 
-export type MerlinResponse<T> =
-  | {
-      class: "return";
-      value: T;
-      notifications: IMerlinNotification;
-    }
-  | {
-      class: "failure";
-      value: string;
-      notifications: IMerlinNotification;
-    }
-  | {
-      class: "error";
-      value: string;
-      notifications: IMerlinNotification;
-    }
-  | {
-      class: "exception";
-      value: json.Value;
-      notifications: IMerlinNotification;
-    }
-  | {
-      class: "canceled";
-      value: string;
-    };
+export interface IResponseError {
+  class: "error";
+  value: string;
+  notifications: INotification[];
+}
 
-export type Response<T> = Promise<MerlinResponse<T>>;
+export interface IResponseException {
+  class: "exception";
+  value: json.Value;
+  notifications: INotification[];
+}
+
+export interface IResponseFailure {
+  class: "failure";
+  value: string;
+  notifications: INotification[];
+}
+
+export interface IResponseReturn<O> {
+  class: "return";
+  value: O;
+  notifications: INotification[];
+}
+
+export type Response<O> = IResponseError | IResponseException | IResponseFailure | IResponseReturn<O>;
