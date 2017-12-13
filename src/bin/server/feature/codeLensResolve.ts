@@ -1,9 +1,10 @@
 import * as LSP from "vscode-languageserver-protocol";
 import * as command from "../command";
 import Session from "../session";
+import * as support from "../support";
 
 export default function(session: Session): LSP.RequestHandler<LSP.CodeLens, LSP.CodeLens, void> {
-  const go = async (event: LSP.CodeLens, token: LSP.CancellationToken) => {
+  return support.cancellableHandler(async (event, token) => {
     const data: LSP.SymbolInformation & {
       event: LSP.TextDocumentPositionParams;
       fileKind: "ml" | "re";
@@ -13,12 +14,10 @@ export default function(session: Session): LSP.RequestHandler<LSP.CodeLens, LSP.
     if (itemType.length === 0) {
       return event;
     }
-
     event.command = { command: "", title: itemType[0].type };
     if ("re" === data.fileKind) {
       event.command.title = event.command.title.replace(/ : /g, ": ");
     }
-
     if (!session.settings.reason.codelens.unicode) {
       return event;
     }
@@ -31,12 +30,6 @@ export default function(session: Session): LSP.RequestHandler<LSP.CodeLens, LSP.
     if ("re" === data.fileKind) {
       event.command.title = event.command.title.replace(/=>/g, "⇒");
     }
-
     return event;
-  };
-  return (event, token) =>
-    Promise.race<LSP.CodeLens>([
-      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
-      go(event, token),
-    ]);
+  });
 }

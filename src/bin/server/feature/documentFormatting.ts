@@ -1,9 +1,10 @@
 import * as LSP from "vscode-languageserver-protocol";
 import * as command from "../command";
 import Session from "../session";
+import * as support from "../support";
 
 export default function(session: Session): LSP.RequestHandler<LSP.DocumentFormattingParams, LSP.TextEdit[], void> {
-  const go = async (event: LSP.DocumentFormattingParams, _token: LSP.CancellationToken) => {
+  return support.cancellableHandler(async (event, _token) => {
     const result = await command.getTextDocument(session, event.textDocument);
     if (!result) {
       return [];
@@ -32,10 +33,5 @@ export default function(session: Session): LSP.RequestHandler<LSP.DocumentFormat
       ),
     );
     return edits;
-  };
-  return (event, token) =>
-    Promise.race<LSP.TextEdit[]>([
-      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
-      go(event, token),
-    ]);
+  });
 }

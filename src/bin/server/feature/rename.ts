@@ -2,9 +2,10 @@ import * as LSP from "vscode-languageserver-protocol";
 import { merlin } from "../../../lib";
 import * as command from "../command";
 import Session from "../session";
+import * as support from "../support";
 
 export default function(session: Session): LSP.RequestHandler<LSP.RenameParams, LSP.WorkspaceEdit, void> {
-  const go = async (event: LSP.RenameParams, token: LSP.CancellationToken) => {
+  return support.cancellableHandler(async (event, token) => {
     const occurrences = await command.getOccurrences(session, event, token);
     if (occurrences == null) return { changes: {} };
     const renamings = occurrences.map(loc => LSP.TextEdit.replace(merlin.Location.intoCode(loc), event.newName));
@@ -14,10 +15,5 @@ export default function(session: Session): LSP.RequestHandler<LSP.RenameParams, 
     ];
     const edit: LSP.WorkspaceEdit = { documentChanges };
     return edit;
-  };
-  return (event, token) =>
-    Promise.race<LSP.WorkspaceEdit>([
-      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
-      go(event, token),
-    ]);
+  });
 }

@@ -2,9 +2,10 @@ import * as LSP from "vscode-languageserver-protocol";
 import { parser } from "../../../lib";
 import * as command from "../command";
 import Session from "../session";
+import * as support from "../support";
 
 export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Hover, void> {
-  const go = async (event: LSP.TextDocumentPositionParams, token: LSP.CancellationToken) => {
+  return support.cancellableHandler(async (event, token) => {
     const position = { position: event.position, uri: event.textDocument.uri };
     const word = await command.getWordAtPosition(session, position);
     const markedStrings: LSP.MarkedString[] = [];
@@ -24,10 +25,5 @@ export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPo
       }
     }
     return { contents: markedStrings };
-  };
-  return (event, token) =>
-    Promise.race<LSP.Hover>([
-      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
-      go(event, token),
-    ]);
+  });
 }

@@ -2,11 +2,12 @@ import * as LSP from "vscode-languageserver-protocol";
 import { merlin } from "../../../lib";
 import * as command from "../command";
 import Session from "../session";
+import * as support from "../support";
 
 export default function(
   session: Session,
 ): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.CompletionItem[], void> {
-  const go = async (event: LSP.TextDocumentPositionParams, token: LSP.CancellationToken) => {
+  return support.cancellableHandler(async (event, token) => {
     let prefix: null | string = null;
     try {
       prefix = await command.getPrefix(session, event);
@@ -24,10 +25,5 @@ export default function(
         .at(colLine)
         .with.doc()).entries || [];
     return entries.map(merlin.Completion.intoCode);
-  };
-  return (event, token) =>
-    Promise.race<LSP.CompletionItem[]>([
-      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
-      go(event, token),
-    ]);
+  });
 }

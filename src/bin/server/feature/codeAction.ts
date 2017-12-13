@@ -1,8 +1,9 @@
 import * as LSP from "vscode-languageserver-protocol";
 import Session from "../session";
+import * as support from "../support";
 
 export default function(_: Session): LSP.RequestHandler<LSP.CodeActionParams, LSP.Command[], void> {
-  const go = async (event: LSP.CodeActionParams, _token: LSP.CancellationToken) => {
+  return support.cancellableHandler(async (event, _token) => {
     const actions: LSP.Command[] = [];
     let matches: null | RegExpMatchArray = null;
     for (const { message, range } of event.context.diagnostics) {
@@ -35,10 +36,5 @@ export default function(_: Session): LSP.RequestHandler<LSP.CodeActionParams, LS
       }
     }
     return actions;
-  };
-  return (event, token) =>
-    Promise.race<LSP.Command[]>([
-      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
-      go(event, token),
-    ]);
+  });
 }

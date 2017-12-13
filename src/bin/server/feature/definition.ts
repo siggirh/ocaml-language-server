@@ -2,9 +2,10 @@ import * as LSP from "vscode-languageserver-protocol";
 import URI from "vscode-uri";
 import { merlin } from "../../../lib";
 import Session from "../session";
+import * as support from "../support";
 
 export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Definition, void> {
-  const go = async (event: LSP.TextDocumentPositionParams, token: LSP.CancellationToken) => {
+  return support.cancellableHandler(async (event, token) => {
     const find = async (kind: "ml" | "mli"): Promise<null | LSP.Location> => {
       const colLine = merlin.Position.fromCode(event.position);
       const value = await session.merlin
@@ -26,10 +27,5 @@ export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPo
       locations.push(locML);
     }
     return locations;
-  };
-  return (event, token) =>
-    Promise.race<LSP.Definition>([
-      new Promise((_resolve, reject) => token.onCancellationRequested(reject)),
-      go(event, token),
-    ]);
+  });
 }
