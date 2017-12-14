@@ -65,6 +65,7 @@ export abstract class Poly<I extends merlin.Command, R, S> {
   }
 
   protected iterate(resolve: (value: S) => void, iteration: number): void {
+    if (!this.bundle.token || !this.bundle.token.isCancellationRequested) {
     this.bundle.merlin.readline.question(this.request, answer => {
       try {
         const payload = this.handle(answer, iteration);
@@ -78,6 +79,7 @@ export abstract class Poly<I extends merlin.Command, R, S> {
         //
       }
     });
+    }
   }
 
   protected processNotifications(notifications: merlin.INotification[], _iteration: number): void {
