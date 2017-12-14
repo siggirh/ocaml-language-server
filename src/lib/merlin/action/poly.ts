@@ -28,6 +28,7 @@ export abstract class Poly<I extends merlin.Command, R, S> {
   }
 
   protected handle(answer: string, iteration: number): R {
+    this.bundle.connection.tracer.log(`merlin::handle::response::${answer}${"\n\n"}`);
     const response: merlin.Response<R> = JSON.parse(answer);
     switch (response.class) {
       case "error":
@@ -66,25 +67,28 @@ export abstract class Poly<I extends merlin.Command, R, S> {
 
   protected iterate(resolve: (value: S) => void, iteration: number): void {
     if (!this.bundle.token || !this.bundle.token.isCancellationRequested) {
-    this.bundle.merlin.readline.question(this.request, answer => {
-      try {
-        const payload = this.handle(answer, iteration);
-        switch (this.refine(payload, iteration)) {
-          case IterationStatus.DONE:
-            return resolve(this.transform(payload));
-          case IterationStatus.MORE:
-            return this.iterate(resolve, iteration++);
+      this.bundle.connection.tracer.log(`merlin::iterate::request::${this.request}${"\n\n"}`);
+      this.bundle.merlin.readline.question(this.request, answer => {
+        try {
+          const payload = this.handle(answer, iteration);
+          switch (this.refine(payload, iteration)) {
+            case IterationStatus.DONE:
+              return resolve(this.transform(payload));
+            case IterationStatus.MORE:
+              return this.iterate(resolve, iteration++);
+          }
+        } catch (err) {
+          //
         }
-      } catch (err) {
-        //
-      }
-    });
+      });
+    } else {
+      this.bundle.connection.tracer.log(`merlin::iterate::cancelled`);
     }
   }
 
   protected processNotifications(notifications: merlin.INotification[], _iteration: number): void {
     for (const notice of notifications) {
-      this.bundle.connection.console.info(JSON.stringify(notice));
+      this.bundle.connection.console.info(`merlin::notification::${JSON.stringify(notice)}`);
     }
   }
 }
