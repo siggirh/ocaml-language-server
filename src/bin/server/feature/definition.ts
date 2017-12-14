@@ -5,7 +5,7 @@ import Session from "../session";
 import * as support from "../support";
 
 export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Definition, void> {
-  return support.cancellableHandler(async (event, token) => {
+  return support.cancellableHandler(session, async (event, token) => {
     const find = async (kind: "ml" | "mli"): Promise<null | LSP.Location> => {
       const colLine = merlin.Position.fromCode(event.position);
       const value = await session.merlin

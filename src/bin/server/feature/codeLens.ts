@@ -7,7 +7,7 @@ import * as support from "../support";
 const annotateKinds = new Set<number>([LSP.SymbolKind.Variable]);
 
 export default function(session: Session): LSP.RequestHandler<LSP.CodeLensParams, LSP.CodeLens[], void> {
-  return support.cancellableHandler(async ({ textDocument }, token) => {
+  return support.cancellableHandler(session, async ({ textDocument }, token) => {
     if (!session.settings.reason.codelens.enabled) {
       return [];
     }

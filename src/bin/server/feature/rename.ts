@@ -5,7 +5,7 @@ import Session from "../session";
 import * as support from "../support";
 
 export default function(session: Session): LSP.RequestHandler<LSP.RenameParams, LSP.WorkspaceEdit, void> {
-  return support.cancellableHandler(async (event, token) => {
+  return support.cancellableHandler(session, async (event, token) => {
     const occurrences = await command.getOccurrences(session, event, token);
     if (occurrences == null) return { changes: {} };
     const renamings = occurrences.map(loc => LSP.TextEdit.replace(merlin.Location.intoCode(loc), event.newName));

@@ -7,7 +7,7 @@ import * as support from "../support";
 export default function(
   session: Session,
 ): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.CompletionItem[], void> {
-  return support.cancellableHandler(async (event, token) => {
+  return support.cancellableHandler(session, async (event, token) => {
     let prefix: null | string = null;
     try {
       prefix = await command.getPrefix(session, event);

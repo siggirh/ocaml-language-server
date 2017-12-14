@@ -5,7 +5,7 @@ import Session from "../session";
 import * as support from "../support";
 
 export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Hover, void> {
-  return support.cancellableHandler(async (event, token) => {
+  return support.cancellableHandler(session, async (event, token) => {
     const position = { position: event.position, uri: event.textDocument.uri };
     const word = await command.getWordAtPosition(session, position);
     const markedStrings: LSP.MarkedString[] = [];
