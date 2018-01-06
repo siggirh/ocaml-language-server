@@ -4,7 +4,7 @@ import Session from "../session";
 
 export default function(
   session: Session,
-): LSP.RequestHandler<types.ITextDocumentRange, null | merlin.Case.Destruct, void> {
+): LSP.RequestHandler<types.ITextDocumentRange, null | merlin.Case.Destruct, never> {
   return async (event, token) => {
     const start = merlin.Position.fromCode(event.range.start);
     const end = merlin.Position.fromCode(event.range.end);

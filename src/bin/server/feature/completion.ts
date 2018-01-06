@@ -6,7 +6,7 @@ import * as support from "../support";
 
 export default function(
   session: Session,
-): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.CompletionItem[], void> {
+): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.CompletionItem[], never> {
   return support.cancellableHandler(session, async (event, token) => {
     let prefix: null | string = null;
     try {

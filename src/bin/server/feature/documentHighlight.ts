@@ -6,7 +6,7 @@ import * as support from "../support";
 
 export default function(
   session: Session,
-): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.DocumentHighlight[], void> {
+): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.DocumentHighlight[], never> {
   return support.cancellableHandler(session, async (event, token) => {
     const occurrences = await command.getOccurrences(session, event, token);
     if (occurrences == null) return [];

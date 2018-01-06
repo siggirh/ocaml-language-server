@@ -4,7 +4,7 @@ import * as command from "../command";
 import Session from "../session";
 import * as support from "../support";
 
-export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Hover, void> {
+export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Hover, never> {
   return support.cancellableHandler(session, async (event, token) => {
     const position = { position: event.position, uri: event.textDocument.uri };
     const word = await command.getWordAtPosition(session, position);

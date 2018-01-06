@@ -4,7 +4,7 @@ import { merlin } from "../../../lib";
 import Session from "../session";
 import * as support from "../support";
 
-export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Definition, void> {
+export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Definition, never> {
   return support.cancellableHandler(session, async (event, token) => {
     const find = async (kind: "ml" | "mli"): Promise<null | LSP.Location> => {
       const colLine = merlin.Position.fromCode(event.position);

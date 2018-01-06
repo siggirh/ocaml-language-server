@@ -3,7 +3,7 @@ import * as command from "../command";
 import Session from "../session";
 import * as support from "../support";
 
-export default function(session: Session): LSP.RequestHandler<LSP.CodeLens, LSP.CodeLens, void> {
+export default function(session: Session): LSP.RequestHandler<LSP.CodeLens, LSP.CodeLens, never> {
   return support.cancellableHandler(session, async (event, token) => {
     const data: LSP.SymbolInformation & {
       event: LSP.TextDocumentPositionParams;

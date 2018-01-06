@@ -4,7 +4,7 @@ import * as command from "../command";
 import Session from "../session";
 import * as support from "../support";
 
-export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Location[], void> {
+export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.Location[], never> {
   return support.cancellableHandler(session, async (event, token) => {
     const occurrences = await command.getOccurrences(session, event, token);
     if (occurrences == null) {

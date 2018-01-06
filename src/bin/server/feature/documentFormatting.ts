@@ -3,7 +3,7 @@ import * as command from "../command";
 import Session from "../session";
 import * as support from "../support";
 
-export default function(session: Session): LSP.RequestHandler<LSP.DocumentFormattingParams, LSP.TextEdit[], void> {
+export default function(session: Session): LSP.RequestHandler<LSP.DocumentFormattingParams, LSP.TextEdit[], never> {
   return support.cancellableHandler(session, async (event, _token) => {
     const result = await command.getTextDocument(session, event.textDocument);
     if (!result) {
