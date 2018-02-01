@@ -51,7 +51,7 @@ export default class Synchronizer implements LSP.Disposable {
     this.documents.set(document.uri, LSP.TextDocument.create(document.uri, languageId, document.version, content));
 
     const request = merlin.Sync.tell("start", "end", content);
-    await this.session.merlin.sync(request, document, Infinity);
+    await this.session.merlin.sync(request, document);
   }
 
   private async doIncrementalSync(
@@ -72,7 +72,7 @@ export default class Synchronizer implements LSP.Disposable {
     const startPos = merlin.Position.fromCode(change.range.start);
     const endPos = merlin.Position.fromCode(change.range.end);
     const request = merlin.Sync.tell(startPos, endPos, change.text);
-    await this.session.merlin.sync(request, newDocument, Infinity);
+    await this.session.merlin.sync(request, newDocument);
   }
 
   private async onDidChangeTextDocument(event: LSP.DidChangeTextDocumentParams): Promise<void> {

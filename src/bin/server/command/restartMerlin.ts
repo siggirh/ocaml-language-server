@@ -7,7 +7,7 @@ export default async function(session: Session): Promise<void> {
   for (const document of session.synchronizer.documents.values()) {
     const content = document.getText();
     const request = merlin.Sync.tell("start", "end", content);
-    await session.merlin.sync(request, document, Infinity);
+    await session.merlin.sync(request, document);
     const tools: Set<string> = new Set(session.settings.reason.diagnostics.tools);
     if (!tools.has("bsb")) {
       await session.analyzer.refreshImmediate(document);

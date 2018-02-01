@@ -102,17 +102,18 @@ export default class Merlin implements LSP.Disposable {
     await this.initialize();
   }
 
-  public sync<I, O>(
-    { sync: query }: merlin.Sync<I, O>,
-    id?: LSP.TextDocumentIdentifier,
-    priority: number = 0,
-  ): merlin.Response<O> {
+  /**
+   * Unlike with query, we never want to have a priority for sync, since
+   * reordering these can cause inconsistencies between what Merlin thinks the
+   * file looks like and what the file actually looks like.
+   */
+  public sync<I, O>({ sync: query }: merlin.Sync<I, O>, id?: LSP.TextDocumentIdentifier): merlin.Response<O> {
     // this.session.connection.console.log(
     //   JSON.stringify({ query, id, priority }),
     // );
     const context: ["auto", string] | undefined = id ? ["auto", URI.parse(id.uri).fsPath] : undefined;
     const request = context ? { context, query } : query;
-    return new Promise(resolve => this.queue.push(new merlin.Task(request), priority, resolve));
+    return new Promise(resolve => this.queue.push(new merlin.Task(request), 0, resolve));
   }
 
   private async establishProtocol(): Promise<void> {
