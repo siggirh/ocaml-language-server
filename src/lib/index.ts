@@ -27,6 +27,9 @@ export interface ISettings {
       refmterr: string;
       rtop: string;
     };
+    format: {
+      width: number | null;
+    };
     server: {
       languages: Array<"ocaml" | "reason">;
     };
@@ -45,6 +48,9 @@ export namespace ISettings {
       diagnostics: {
         merlinPerfLogging: false,
         tools: ["merlin"],
+      },
+      format: {
+        width: null
       },
       path: {
         bsb: "bsb",
