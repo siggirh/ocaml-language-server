@@ -9,7 +9,7 @@ export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPo
     const word = await command.getWordAtPosition(session, event);
     const markedStrings: LSP.MarkedString[] = [];
     const itemTypes = await command.getType(session, event, token);
-    if (itemTypes == null) return { contents: [] };
+    if (null == itemTypes) return { contents: [] };
     const itemDocs = await command.getDocumentation(session, token, event);
     const { type: value } = itemTypes;
     let language = "plaintext";
@@ -20,7 +20,7 @@ export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPo
       language = /^[A-Z]/.test(word) ? "reason.hover.signature" : "reason.hover.type";
     }
     markedStrings.push({ language, value });
-    if (itemDocs && !parser.ocamldoc.ignore.test(itemDocs)) {
+    if (null != itemDocs && !parser.ocamldoc.ignore.test(itemDocs)) {
       markedStrings.push(parser.ocamldoc.intoMarkdown(itemDocs));
     }
     return { contents: markedStrings };

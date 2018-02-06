@@ -11,11 +11,11 @@ export default async function(
 ): Promise<LSP.TextDocumentIdentifier[]> {
   const request = merlin.Query.path.list.source();
   const response = await session.merlin.query(request, token, event, priority);
-  if (response.class !== "return") return [];
+  if ("return" !== response.class) return [];
   const srcDirs: Set<string> = new Set();
   const srcMods: LSP.TextDocumentIdentifier[] = [];
   for (const cwd of response.value) {
-    if (cwd && !(/\.opam\b/.test(cwd) || srcDirs.has(cwd))) {
+    if (!(/\.opam\b/.test(cwd) || srcDirs.has(cwd))) {
       srcDirs.add(cwd);
       const cwdMods = new Glob("*.@(ml|re)?(i)", {
         cwd,

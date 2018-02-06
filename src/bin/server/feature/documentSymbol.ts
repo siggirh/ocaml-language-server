@@ -9,7 +9,7 @@ export default function(
   return support.cancellableHandler(session, async (event, token) => {
     const request = merlin.Query.outline();
     const response = await session.merlin.query(request, token, event.textDocument, Infinity);
-    if (response.class !== "return") return [];
+    if ("return" !== response.class) return [];
     const outline = response.value;
     return merlin.Outline.intoCode(outline, event.textDocument);
   });

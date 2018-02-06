@@ -40,7 +40,7 @@ export default class Environment implements LSP.Disposable {
 
   public relativize(id: LSP.TextDocumentIdentifier): string | undefined {
     const rootPath = this.workspaceRoot();
-    if (!rootPath) return;
+    if (null == rootPath) return;
     return path.relative(rootPath, Environment.uriToPath(id));
   }
 
@@ -50,7 +50,7 @@ export default class Environment implements LSP.Disposable {
     options: childProcess.SpawnOptions = {},
   ): childProcess.ChildProcess {
     options.shell = process.platform === "win32" ? true : options.shell;
-    if (this.projectCommandWrapper !== null) {
+    if (null != this.projectCommandWrapper) {
       return childProcess.spawn(this.projectCommandWrapper, [command].concat(args), options);
     } else {
       return childProcess.spawn(command, args, options);
@@ -79,7 +79,7 @@ export default class Environment implements LSP.Disposable {
     const workspaceRoot = this.workspaceRoot();
     try {
       const projectCommandWrapper = this.projectCommandWrapperPath(workspaceRoot);
-      if (projectCommandWrapper !== null) {
+      if (null != projectCommandWrapper) {
         const exists = await fs.existsSync(projectCommandWrapper);
         this.projectCommandWrapper = exists ? projectCommandWrapper : null;
       }

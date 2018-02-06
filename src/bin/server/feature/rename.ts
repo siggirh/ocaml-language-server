@@ -7,7 +7,7 @@ import * as support from "../support";
 export default function(session: Session): LSP.RequestHandler<LSP.RenameParams, LSP.WorkspaceEdit, never> {
   return support.cancellableHandler(session, async (event, token) => {
     const occurrences = await command.getOccurrences(session, event, token);
-    if (occurrences == null) return { changes: {} };
+    if (null == occurrences) return { changes: {} };
     const renamings = occurrences.map(loc => LSP.TextEdit.replace(merlin.Location.intoCode(loc), event.newName));
     // FIXME: versioning
     const documentChanges = [

@@ -10,8 +10,8 @@ export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPo
       const colLine = merlin.Position.fromCode(event.position);
       const request = merlin.Query.locate(null, kind).at(colLine);
       const response = await session.merlin.query(request, token, event.textDocument);
-      if (response.class !== "return") return null;
-      if (response.value.pos == null) return null;
+      if ("return" !== response.class) return null;
+      if (null == response.value.pos) return null;
       const uri = response.value.file ? URI.file(response.value.file).toString() : event.textDocument.uri;
       const position = merlin.Position.intoCode(response.value.pos);
       const range = LSP.Range.create(position, position);
@@ -20,7 +20,7 @@ export default function(session: Session): LSP.RequestHandler<LSP.TextDocumentPo
     };
     const locML = await find("ml");
     const locations: LSP.Location[] = [];
-    if (locML) locations.push(locML);
+    if (null != locML) locations.push(locML);
     return locations;
   });
 }

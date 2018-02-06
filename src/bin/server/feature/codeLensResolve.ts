@@ -11,7 +11,7 @@ export default function(session: Session): LSP.RequestHandler<LSP.CodeLens, LSP.
     } =
       event.data;
     const itemType = await command.getType(session, data.event, token, 1);
-    if (itemType == null) return event;
+    if (null == itemType) return event;
 
     event.command = { command: "", title: itemType.type };
     if ("re" === data.fileKind) event.command.title = event.command.title.replace(/ : /g, ": ");

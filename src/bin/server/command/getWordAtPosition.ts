@@ -7,7 +7,7 @@ function isWhitespace(str: string = ""): boolean {
 
 export default async function(session: Session, event: LSP.TextDocumentPositionParams): Promise<string> {
   const textDocument = session.synchronizer.getTextDocument(event.textDocument.uri);
-  if (!textDocument) return "";
+  if (null == textDocument) return "";
   const text = textDocument.getText();
   const offset = textDocument.offsetAt(event.position);
   let start = offset;

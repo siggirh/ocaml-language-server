@@ -81,7 +81,9 @@ export default class Analyzer implements LSP.Disposable {
       } else if (tools.has("merlin")) {
         if (syncKind === LSP.TextDocumentSyncKind.Full) {
           const document = await command.getTextDocument(this.session, id);
-          if (document) await this.session.merlin.sync(merlin.Sync.tell("start", "end", document.getText()), id);
+          if (null != document) {
+            await this.session.merlin.sync(merlin.Sync.tell("start", "end", document.getText()), id);
+          }
         }
         this.session.cancelTokens("analyzer/refreshWithKind");
         const errors = await this.session.merlin.query(
@@ -89,7 +91,7 @@ export default class Analyzer implements LSP.Disposable {
           this.session.cancellationSources["analyzer/refreshWithKind"].token,
           id,
         );
-        if (errors.class !== "return") return;
+        if ("return" !== errors.class) return;
         const diagnostics: LSP.Diagnostic[] = [];
         for (const report of errors.value)
           diagnostics.push(await merlin.IErrorReport.intoCode(this.session, id, report));

@@ -33,7 +33,7 @@ export async function ocpIndentRange(session: Session, doc: LSP.TextDocument, ra
   const indents: number[] = [];
   const pattern = /\d+/g;
   let match: null | RegExpExecArray = null;
-  while ((match = pattern.exec(output))) {
+  while (null != (match = pattern.exec(output))) {
     const digits = match.shift() as string;
     const indent = parseInt(digits, 10);
     indents.push(indent);
@@ -42,7 +42,7 @@ export async function ocpIndentRange(session: Session, doc: LSP.TextDocument, ra
 }
 
 export async function refmt(session: Session, doc: LSP.TextDocument, range?: LSP.Range): Promise<null | string> {
-  if (range) {
+  if (null != range) {
     session.connection.console.warn("Selection formatting not support for Reason");
     return null;
   }

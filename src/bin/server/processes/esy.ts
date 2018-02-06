@@ -11,7 +11,7 @@ export default class Esy {
       const process = this.session.environment.spawn(command, args);
 
       process.on("error", (error: Error & { code: string }) => {
-        if (error.code === "ENOENT") {
+        if ("ENOENT" === error.code) {
           const msg = `Perhapse we cannot find esy binary at "${command}".`;
           this.session.connection.window.showWarningMessage(msg);
           this.session.connection.window.showWarningMessage(

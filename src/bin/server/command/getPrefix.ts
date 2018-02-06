@@ -3,7 +3,7 @@ import Session from "../session";
 
 export default async function(session: Session, event: LSP.TextDocumentPositionParams): Promise<null | string> {
   const document = session.synchronizer.getTextDocument(event.textDocument.uri);
-  if (!document) return null;
+  if (null == document) return null;
   const startPosition = {
     character: 0,
     line: event.position.line,

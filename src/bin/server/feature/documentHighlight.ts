@@ -9,7 +9,7 @@ export default function(
 ): LSP.RequestHandler<LSP.TextDocumentPositionParams, LSP.DocumentHighlight[], never> {
   return support.cancellableHandler(session, async (event, token) => {
     const occurrences = await command.getOccurrences(session, event, token);
-    if (occurrences == null) return [];
+    if (null == occurrences) return [];
     const highlights = occurrences.map(loc => {
       const range = merlin.Location.intoCode(loc);
       const kind = LSP.DocumentHighlightKind.Write;

@@ -11,7 +11,7 @@ export default function(
     const request = merlin.Query.kase.analysis.from(start).to(end);
     const response = await session.merlin.query(request, token, event.textDocument);
     if (token.isCancellationRequested) return null;
-    if (response.class !== "return") throw response.value;
+    if ("return" !== response.class) throw response.value;
     return response.value;
   };
 }

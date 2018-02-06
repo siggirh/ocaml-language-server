@@ -17,6 +17,6 @@ export default async (
   const position = merlin.Position.fromCode(event.position);
   const request = merlin.Query.type.enclosing.at(position);
   const response = await session.merlin.query(request, token, event.textDocument, priority);
-  if (response.class !== "return") return null;
+  if ("return" !== response.class) return null;
   return response.value.length > 0 ? response.value[0] : null;
 };

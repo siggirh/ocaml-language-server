@@ -10,6 +10,6 @@ export default async function(
 ): Promise<string[]> {
   const request = merlin.Query.project.get();
   const response = await session.merlin.query(request, token, event, priority);
-  if (response.class !== "return") return [];
+  if ("return" !== response.class) return [];
   return response.value.result;
 }

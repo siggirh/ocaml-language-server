@@ -35,7 +35,7 @@ export default class Synchronizer implements LSP.Disposable {
     oldDocument: LSP.TextDocument,
     change: LSP.TextDocumentContentChangeEvent,
   ): null | string {
-    if (!change.range) return null;
+    if (null == change.range) return null;
     const startOffset = oldDocument.offsetAt(change.range.start);
     const endOffset = oldDocument.offsetAt(change.range.end);
     const before = oldDocument.getText().substr(0, startOffset);
@@ -59,10 +59,10 @@ export default class Synchronizer implements LSP.Disposable {
     newDocument: LSP.VersionedTextDocumentIdentifier,
     change: LSP.TextDocumentContentChangeEvent,
   ): Promise<void> {
-    if (!change || !change.range) return;
+    if (null == change || null == change.range) return;
 
     const newContent = this.applyChangesToTextDocumentContent(oldDocument, change);
-    if (newContent) {
+    if (null != newContent) {
       this.documents.set(
         newDocument.uri,
         LSP.TextDocument.create(oldDocument.uri, oldDocument.languageId, newDocument.version, newContent),
@@ -77,10 +77,10 @@ export default class Synchronizer implements LSP.Disposable {
 
   private async onDidChangeTextDocument(event: LSP.DidChangeTextDocumentParams): Promise<void> {
     for (const change of event.contentChanges) {
-      if (!change) continue;
+      if (null == change) continue;
       const oldDocument = this.documents.get(event.textDocument.uri);
-      if (!oldDocument) continue;
-      if (!change.range) {
+      if (null == oldDocument) continue;
+      if (null == change.range) {
         await this.doFullSync(event.textDocument, oldDocument.languageId, change.text);
       } else {
         await this.doIncrementalSync(oldDocument, event.textDocument, change);

@@ -14,14 +14,14 @@ export default function(
     } catch (err) {
       // ignore errors from completing ' .'
     }
-    if (prefix == null) return [];
+    if (null == prefix) return [];
     const colLine = merlin.Position.fromCode(event.position);
     const request = merlin.Query.complete
       .prefix(prefix)
       .at(colLine)
       .with.doc();
     const response = await session.merlin.query(request, token, event.textDocument, Infinity);
-    if (response.class !== "return") return [];
+    if ("return" !== response.class) return [];
     const entries = response.value.entries || [];
     return entries.map(merlin.Completion.intoCode);
   });

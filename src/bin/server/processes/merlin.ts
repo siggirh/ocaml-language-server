@@ -30,7 +30,7 @@ export default class Merlin implements LSP.Disposable {
     // });
     this.process.on("error", (error: Error & { code: string }) => {
       // this.session.connection.console.log(JSON.stringify({ error }));
-      if (error.code === "ENOENT") {
+      if ("ENOENT" === error.code) {
         this.session.connection.window.showWarningMessage(`Cannot find merlin binary at "${ocamlmerlin}".`);
         this.session.connection.window.showWarningMessage(
           `Double check your path or try configuring "reason.path.ocamlmerlin" under "User Settings".`,
@@ -53,7 +53,7 @@ export default class Merlin implements LSP.Disposable {
 
     const worker: async.AsyncWorker<merlin.Task, merlin.MerlinResponse<any>> = (task, callback) => {
       const begunProcessing = new Date();
-      if (task.token && task.token.isCancellationRequested) {
+      if (null != task.token && task.token.isCancellationRequested) {
         return callback({
           class: "canceled",
           value: "Request has been canceled.",
@@ -87,15 +87,15 @@ export default class Merlin implements LSP.Disposable {
   }
 
   public async restart(): Promise<void> {
-    if (this.queue) {
+    if (null != this.queue) {
       this.queue.kill();
       (this.queue as any) = null;
     }
-    if (this.readline) {
+    if (null != this.readline) {
       this.readline.close();
       (this.readline as any) = null;
     }
-    if (this.process) {
+    if (null != this.process) {
       this.process.kill();
       (this.process as any) = null;
     }
@@ -119,14 +119,17 @@ export default class Merlin implements LSP.Disposable {
   private async establishProtocol(): Promise<void> {
     const request = merlin.Sync.protocol.version.set(3);
     const response = await this.sync(request);
-    if (response.class !== "return" || response.value.selected !== 3) {
+    if ("return" !== response.class || 3 !== response.value.selected) {
       throw new Error("onInitialize: failed to establish protocol v3");
     }
   }
 
   private logMessage<A>(begunProcessing: Date, task: merlin.Task): (result: A) => A {
     return result => {
-      if (this.session.settings.reason.diagnostics && this.session.settings.reason.diagnostics.merlinPerfLogging) {
+      if (
+        null != this.session.settings.reason.diagnostics &&
+        this.session.settings.reason.diagnostics.merlinPerfLogging
+      ) {
         const queueDuration = begunProcessing.getTime() - task.enqueuedAt.getTime();
         const merlinDuration = new Date().getTime() - begunProcessing.getTime();
         this.session.connection.telemetry.logEvent(

@@ -25,7 +25,7 @@ export default function(session: Session): LSP.RequestHandler<LSP.CodeActionPara
         actions.push(action);
         continue;
       }
-      if ((matches = message.match(/Warning (?:26|27): unused variable\s+\b(\w+)\b/))) {
+      if (null != (matches = message.match(/Warning (?:26|27): unused variable\s+\b(\w+)\b/))) {
         const title = "ignore unused variable";
         const command = "reason.codeAction.fixUnusedVariable";
         const location = LSP.Location.create(event.textDocument.uri, range);
