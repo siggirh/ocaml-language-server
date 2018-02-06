@@ -50,7 +50,7 @@ export namespace ISettings {
         tools: ["merlin"],
       },
       format: {
-        width: null
+        width: null,
       },
       path: {
         bsb: "bsb",
