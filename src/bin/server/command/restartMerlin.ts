@@ -12,6 +12,7 @@ export default async function(session: Session): Promise<void> {
     if (!tools.has("bsb")) {
       await session.analyzer.refreshImmediate(document);
     }
+    session.indexer.populated = false;
     await session.indexer.populate(document);
   }
 }

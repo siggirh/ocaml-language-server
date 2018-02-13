@@ -49,7 +49,6 @@ export default class Synchronizer implements LSP.Disposable {
     content: string,
   ): Promise<void> {
     this.documents.set(document.uri, LSP.TextDocument.create(document.uri, languageId, document.version, content));
-
     const request = merlin.Sync.tell("start", "end", content);
     await this.session.merlin.sync(request, document);
   }
@@ -92,7 +91,7 @@ export default class Synchronizer implements LSP.Disposable {
   private async onDidOpenTextDocument(event: LSP.DidOpenTextDocumentParams): Promise<void> {
     await this.doFullSync(event.textDocument, event.textDocument.languageId, event.textDocument.text);
     await this.session.analyzer.refreshImmediate(event.textDocument);
-    await this.session.indexer.populate(event.textDocument);
+    await this.session.indexer.refreshSymbols(event.textDocument);
   }
 
   private onDidCloseTextDocument(event: LSP.DidCloseTextDocumentParams): void {
