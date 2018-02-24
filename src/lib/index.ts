@@ -1,3 +1,4 @@
+import * as deepmerge from "deepmerge";
 import * as merlin from "./merlin";
 import * as remote from "./remote";
 import * as types from "./types";
@@ -70,21 +71,8 @@ export namespace ISettings {
     },
   };
 
-  export function withDefaults(overrides: ISettings): ISettings {
-    return meld(overrides, defaults);
-  }
-
-  function meld<T extends { [prop: string]: any }>(overrides: T, base: T): T {
-    const ret = { ...(overrides as any) };
-    const keys = new Set(Object.keys(ret));
-    for (const key of Object.getOwnPropertyNames(base)) {
-      if (!keys.has(key)) {
-        ret[key] = base[key];
-      } else if (typeof ret[key] === "object" && ret[key] != null && !Array.isArray(ret[key])) {
-        ret[key] = meld(ret[key], base[key]);
-      }
-    }
-    return ret;
+  export function withDefaults(overrides: ISettings | undefined | null): ISettings {
+    return deepmerge(overrides || {}, defaults);
   }
 }
 
