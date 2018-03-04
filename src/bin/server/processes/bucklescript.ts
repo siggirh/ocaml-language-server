@@ -22,6 +22,10 @@ export default class BuckleScript {
       });
       process.stdout.on("data", (data: Buffer | string) => (buffer += data.toString()));
       process.stdout.on("end", () => resolve(buffer));
+      process.on("uncaughtException", (error: Error & { code: string }) => {
+        // Useful for some specific cases, like bsb not having permissions to write to the file system
+        this.session.connection.window.showWarningMessage(error.message);
+      });
     });
   }
 }
