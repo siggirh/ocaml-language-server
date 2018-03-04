@@ -1,4 +1,5 @@
 import * as LSP from "vscode-languageserver-protocol";
+import { refmt as refmtParser } from "../parser";
 import * as processes from "../processes";
 import Session from "../session";
 
@@ -53,9 +54,20 @@ export async function refmt(session: Session, doc: LSP.TextDocument, range?: LSP
   refmt.stdin.end();
   const otxt = await new Promise<string>((resolve, reject) => {
     let buffer = "";
+    let bufferError = "";
+
     refmt.stdout.on("error", (error: Error) => reject(error));
     refmt.stdout.on("data", (data: Buffer | string) => (buffer += data.toString()));
     refmt.stdout.on("end", () => resolve(buffer));
+
+    refmt.stderr.on("data", (data: Buffer | string) => (bufferError += data.toString()));
+    refmt.stderr.on("end", () => {
+      const diagnostics = refmtParser.parseErrors(bufferError);
+      session.connection.sendDiagnostics({
+        diagnostics,
+        uri: doc.uri,
+      });
+    });
   });
   refmt.unref();
   return /^\s*$/.test(otxt) ? null : otxt.trim();

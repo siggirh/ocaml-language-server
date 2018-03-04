@@ -1,30 +1,7 @@
 import * as LSP from "vscode-languageserver-protocol";
+import { createDiagnostic } from "../shared";
 
-function createDiagnostic(
-  message: string,
-  startCharacter: number,
-  startLine: number,
-  endCharacter: number,
-  endLine: number,
-  severity: LSP.DiagnosticSeverity,
-) {
-  return {
-    code: "",
-    message,
-    range: {
-      end: {
-        character: endCharacter,
-        line: endLine,
-      },
-      start: {
-        character: startCharacter,
-        line: startLine,
-      },
-    },
-    severity,
-    source: "bucklescript",
-  };
-}
+const createBucklescriptDiagnostic = createDiagnostic("bucklescript");
 
 export function parseErrors(bsbOutput: string): { [key: string]: LSP.Diagnostic[] } {
   const parsedDiagnostics: { [uri: string]: LSP.Diagnostic[] } = {};
@@ -51,7 +28,7 @@ export function parseErrors(bsbOutput: string): { [key: string]: LSP.Diagnostic[
       ? LSP.DiagnosticSeverity.Warning
       : LSP.DiagnosticSeverity.Error;
 
-    const diagnostic: LSP.Diagnostic = createDiagnostic(
+    const diagnostic: LSP.Diagnostic = createBucklescriptDiagnostic(
       message,
       startCharacter,
       startLine,
@@ -99,7 +76,7 @@ export function parseErrors(bsbOutput: string): { [key: string]: LSP.Diagnostic[
       ? LSP.DiagnosticSeverity.Warning
       : LSP.DiagnosticSeverity.Error;
 
-    const diagnostic: LSP.Diagnostic = createDiagnostic(
+    const diagnostic: LSP.Diagnostic = createBucklescriptDiagnostic(
       message,
       startCharacter,
       startLine,
@@ -140,7 +117,7 @@ export function parseErrors(bsbOutput: string): { [key: string]: LSP.Diagnostic[
         ? LSP.DiagnosticSeverity.Warning
         : LSP.DiagnosticSeverity.Error;
 
-      const diagnostic: LSP.Diagnostic = createDiagnostic(
+      const diagnostic: LSP.Diagnostic = createBucklescriptDiagnostic(
         message,
         startCharacter,
         startLine,
