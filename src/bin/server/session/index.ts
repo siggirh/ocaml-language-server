@@ -71,13 +71,7 @@ export default class Session implements LSP.Disposable {
   public async onDidChangeConfiguration({ settings }: LSP.DidChangeConfigurationParams): Promise<void> {
     const oldMerlinPath = this.settings.reason.path.ocamlmerlin;
     (this.settings as any) = { ...this.settings, ...settings };
-    if (
-      settings &&
-      settings.reason &&
-      settings.reason.path &&
-      settings.reason.path.ocamlmerlin &&
-      settings.reason.path.ocamlmerlin !== oldMerlinPath
-    ) {
+    if (this.settings.reason.path.ocamlmerlin !== oldMerlinPath) {
       // this.connection.console.log(`merlin path changed: ${settings.reason.path.ocamlmerlin}, restarting...`)
       await this.merlin.restart();
     }
