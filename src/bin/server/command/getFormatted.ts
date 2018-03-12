@@ -63,10 +63,12 @@ export async function refmt(session: Session, doc: LSP.TextDocument, range?: LSP
     refmt.stderr.on("data", (data: Buffer | string) => (bufferError += data.toString()));
     refmt.stderr.on("end", () => {
       const diagnostics = refmtParser.parseErrors(bufferError);
-      session.connection.sendDiagnostics({
-        diagnostics,
-        uri: doc.uri,
-      });
+      if (diagnostics.length !== 0) {
+        session.connection.sendDiagnostics({
+          diagnostics,
+          uri: doc.uri,
+        });
+      }
     });
   });
   refmt.unref();
