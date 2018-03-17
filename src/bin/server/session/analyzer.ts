@@ -15,8 +15,8 @@ export default class Analyzer implements LSP.Disposable {
 
   public clear({ uri }: LSP.TextDocumentIdentifier): void {
     if (
-      this.bsbDiagnostics[uri] &&
-      this.bsbDiagnostics[uri][0] &&
+      this.bsbDiagnostics[uri] == null ||
+      this.bsbDiagnostics[uri][0] == null ||
       this.bsbDiagnostics[uri][0].source !== "bucklescript"
     ) {
       this.session.connection.sendDiagnostics({
