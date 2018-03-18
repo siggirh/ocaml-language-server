@@ -31,3 +31,19 @@ cd ocaml-language-server
 yarn install                                                      # install dependencies
 node ./bin/server --stdio                                         # start the server (optional)
 ```
+
+### Debugging the language server with VSCode
+
+It is possible to debug the language server with VSCode, leveraging the debugging tools it provides.
+
+In order to do so:
+
+1. Clone https://github.com/reasonml-editor/vscode-reasonml and run `yarn install`
+1. Clone https://github.com/freebroccolo/ocaml-language-server and run `yarn install`
+1. In the terminal, go to the `ocaml-lang-server` folder and type `npm link`
+1. In the terminal, go to the `vscode-reasonml` folder and type `npm link ocaml-lang-server`. This should make the version of `ocaml-lang-server` in  `vscode-reasonml/node_modules` point to your local version
+1. Open both `vscode-reasonml` and `ocaml-lang-server` folders in VSCode (you can open a new VSCode window using cmd+shift+n on MacOS or ctrl-shift-n in Windows and Linux)
+1. In `vscode-reasonml` window, go to "Debug->Start Debugging". This will open a new VSCode window where the vscode-reasonml extension has been replaced with the development one.
+1. In `ocaml-lang-server` window, go to the Debug panel (cmd-shift-d / ctrl-shift-d) and press the Play button at the top: "Attach to process"
+
+At this point, if you want to test for changes, you can run `npm run watch` in the "Terminal" panel of the `ocaml-lang-server` window, and restart the debugging process in the `vscode-reasonml` window to test them.
