@@ -42,6 +42,8 @@ export async function ocpIndentRange(session: Session, doc: LSP.TextDocument, ra
   return indents;
 }
 
+// Temporary measure until there is some persisted list of diagnostics shared between services
+let lastDiagnostics: LSP.Diagnostic[] = [];
 export async function refmt(session: Session, doc: LSP.TextDocument, range?: LSP.Range): Promise<null | string> {
   if (null != range) {
     session.connection.console.warn("Selection formatting not support for Reason");
@@ -63,12 +65,13 @@ export async function refmt(session: Session, doc: LSP.TextDocument, range?: LSP
     refmt.stderr.on("data", (data: Buffer | string) => (bufferError += data.toString()));
     refmt.stderr.on("end", () => {
       const diagnostics = refmtParser.parseErrors(bufferError);
-      if (diagnostics.length !== 0) {
+      if (diagnostics.length !== 0 || diagnostics.length !== lastDiagnostics.length) {
         session.connection.sendDiagnostics({
           diagnostics,
           uri: doc.uri,
         });
       }
+      lastDiagnostics = diagnostics;
     });
   });
   refmt.unref();
